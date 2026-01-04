@@ -1,70 +1,208 @@
-# Getting Started with Create React App
+# 🚚 Sistema de Control Logístico
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Sistema integral de monitoreo y control de transporte con Business Intelligence para gestión de flotas vehiculares.
 
-## Available Scripts
+## 📋 Características
 
-In the project directory, you can run:
+### 🗺️ Monitor de Rutas
+- Visualización en tiempo real con Google Maps
+- Planificación de rutas inteligente
+- Seguimiento de unidades activas
+- Cálculo de distancias y tiempos
 
-### `npm start`
+### 📊 Reportes
+- Análisis de consumo de combustible
+- Tracking de kilómetros recorridos
+- Monitoreo de temperatura de unidades
+- Estado de la flota en tiempo real
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### 💼 Business Intelligence
+- Control de movimientos de material (entrada/salida)
+- Análisis de flujo de efectivo
+- Gráficos de tendencias semanales
+- Balance neto de operaciones
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### ⚙️ Administrador
+- CRUD completo de vehículos
+- Gestión de estados (Activo/Inactivo/Mantenimiento)
+- Control de capacidad de combustible
+- Monitoreo de temperatura
 
-### `npm test`
+## 🛠️ Stack Tecnológico
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- **Frontend**: React 18 + TypeScript + Vite
+- **Backend/BD**: Supabase (PostgreSQL)
+- **Mapas**: Google Maps API
+- **Gráficos**: Recharts
+- **Iconos**: Lucide React
+- **Estilos**: CSS Modules
 
-### `npm run build`
+## 📦 Instalación
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 1. Clonar el repositorio
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+git clone https://github.com/Jonathan-Rivera-A/LOGISTICS-CONTROL.git
+cd LOGISTICS-CONTROL
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### 2. Instalar dependencias
 
-### `npm run eject`
+```bash
+npm install
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### 3. Configurar variables de entorno
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Crea un archivo `.env` en la raíz del proyecto:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```env
+# Supabase Configuration
+VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
+VITE_SUPABASE_ANON_KEY=tu-clave-anonima-aqui
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+# Google Maps API Key
+VITE_GOOGLE_MAPS_API_KEY=tu-google-maps-api-key-aqui
+```
 
-## Learn More
+#### Cómo obtener las credenciales:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+**Supabase:**
+1. Ve a [supabase.com](https://supabase.com)
+2. Crea un nuevo proyecto o selecciona uno existente
+3. Ve a Settings → API
+4. Copia la URL del proyecto y la clave anónima (anon/public)
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+**Google Maps:**
+1. Ve a [Google Cloud Console](https://console.cloud.google.com/)
+2. Crea un nuevo proyecto o selecciona uno existente
+3. Habilita la API de Google Maps
+4. Ve a Credenciales y crea una API Key
+5. Habilita las siguientes APIs:
+   - Maps JavaScript API
+   - Directions API
+   - Places API (opcional)
 
-### Code Splitting
+### 4. Configurar la base de datos
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+Ejecuta la migración de Supabase ubicada en:
+```
+supabase/migrations/20251025083515_create_transport_monitoring_tables.sql
+```
 
-### Analyzing the Bundle Size
+En tu panel de Supabase:
+1. Ve a SQL Editor
+2. Copia y pega el contenido del archivo de migración
+3. Ejecuta el script
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### 5. Ejecutar el proyecto
 
-### Making a Progressive Web App
+```bash
+npm run dev
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+La aplicación estará disponible en `http://localhost:5173`
 
-### Advanced Configuration
+## 📚 Estructura de la Base de Datos
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+### Tablas Principales:
 
-### Deployment
+- **vehicles**: Información de vehículos
+  - id, name, plate, status, current_temperature, fuel_capacity
+  
+- **routes**: Registro de rutas de transporte
+  - id, vehicle_id, origin, destination, distance_km, fuel_consumed, start_time, end_time
+  
+- **material_movements**: Movimientos de material
+  - id, vehicle_id, type (entrada/salida), material_name, quantity, unit, date
+  
+- **cash_movements**: Flujo de efectivo
+  - id, type (entrada/salida), amount, concept, date, related_vehicle_id
+  
+- **vehicle_status_log**: Historial de estados
+  - id, vehicle_id, temperature, fuel_level, status, latitude, longitude, recorded_at
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## 🚀 Scripts Disponibles
 
-### `npm run build` fails to minify
+```bash
+npm run dev      # Inicia el servidor de desarrollo
+npm run build    # Construye la aplicación para producción
+npm run preview  # Vista previa de la build de producción
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 🔐 Seguridad
+
+El proyecto utiliza Row Level Security (RLS) de Supabase. Las políticas actuales requieren usuarios autenticados.
+
+### Opciones de configuración:
+
+**Opción 1: Con autenticación (Recomendado para producción)**
+- Implementar sistema de login/registro con Supabase Auth
+
+**Opción 2: Sin autenticación (Solo desarrollo)**
+- Desactivar RLS en las tablas de Supabase
+- ⚠️ No recomendado para producción
+
+## 🎨 Mejoras Implementadas
+
+### Manejo de Errores
+- ✅ Validación de formularios
+- ✅ Manejo de errores de API
+- ✅ Mensajes de error descriptivos
+- ✅ Feedback visual con toasts
+
+### UX/UI
+- ✅ Loading states en todas las operaciones
+- ✅ Confirmaciones antes de eliminar
+- ✅ Estados de carga visual
+- ✅ Notificaciones toast
+- ✅ Data-testids para testing
+
+### Rendimiento
+- ✅ Optimización de consultas
+- ✅ Límites en consultas de datos
+- ✅ Manejo eficiente de estados
+
+## 📝 Tareas Pendientes
+
+- [ ] Implementar sistema de autenticación
+- [ ] Agregar tests unitarios y de integración
+- [ ] Implementar modo offline
+- [ ] Agregar exportación de reportes (PDF/Excel)
+- [ ] Implementar notificaciones push
+- [ ] Agregar sistema de roles y permisos
+- [ ] Optimizar para móviles
+- [ ] Agregar modo oscuro
+
+## 🐛 Problemas Conocidos
+
+1. **RLS activado sin autenticación**: Las políticas de seguridad requieren usuarios autenticados
+2. **API Key por defecto**: Configurar Google Maps API Key para usar mapas
+3. **Datos de ejemplo**: La migración incluye datos de prueba que deben ser removidos en producción
+
+## 🤝 Contribuir
+
+Las contribuciones son bienvenidas. Por favor:
+
+1. Fork el proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add: AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+## 📄 Licencia
+
+Este proyecto está bajo licencia MIT.
+
+## 👤 Autor
+
+**Jonathan Rivera**
+- GitHub: [@Jonathan-Rivera-A](https://github.com/Jonathan-Rivera-A)
+
+## 📞 Soporte
+
+Para soporte, abre un issue en GitHub o contacta al autor.
+
+---
+
+⭐ Si este proyecto te fue útil, considera darle una estrella en GitHub

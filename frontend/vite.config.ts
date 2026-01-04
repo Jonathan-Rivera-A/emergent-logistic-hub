@@ -12,10 +12,21 @@ export default defineConfig({
       '.preview.emergentagent.com',
       'localhost',
     ],
+    cors: {
+      origin: '*',
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+      credentials: true,
+    },
+    hmr: {
+      clientPort: 443,
+      protocol: 'wss',
+    },
   },
   preview: {
     host: '0.0.0.0',
     port: 3000,
     strictPort: true,
+    cors: true,
   }
 })

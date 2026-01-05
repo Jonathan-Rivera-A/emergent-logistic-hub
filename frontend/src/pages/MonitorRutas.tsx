@@ -404,6 +404,90 @@ function MonitorRutas() {
             </LoadScript>
           </div>
         </div>
+
+        {/* Tabla de Historial de Rutas */}
+        <div className="card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h2 style={{ margin: 0 }}>Historial de Rutas Calculadas</h2>
+            <span style={{ fontSize: '14px', color: '#6b7280' }}>
+              {routes.length} {routes.length === 1 ? 'ruta' : 'rutas'}
+            </span>
+          </div>
+
+          {routes.length === 0 ? (
+            <div style={{ 
+              textAlign: 'center', 
+              padding: '40px', 
+              color: '#6b7280',
+              backgroundColor: '#f9fafb',
+              borderRadius: '8px'
+            }}>
+              <p style={{ margin: 0, fontSize: '14px' }}>
+                No hay rutas calculadas aún. Calcula una ruta para ver el historial aquí.
+              </p>
+            </div>
+          ) : (
+            <div style={{ overflow: 'auto' }}>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Unidad</th>
+                    <th>Origen</th>
+                    <th>Destino</th>
+                    <th>Distancia (km)</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {routes.map((route) => (
+                    <tr key={route.id} data-testid={`route-row-${route.id}`}>
+                      <td style={{ fontSize: '13px' }}>
+                        {new Date(route.created_at).toLocaleDateString('es-MX', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </td>
+                      <td style={{ fontWeight: 500, color: '#1f2937' }}>
+                        {getVehicleName(route.vehicle_id)}
+                      </td>
+                      <td>{route.origin}</td>
+                      <td>{route.destination}</td>
+                      <td style={{ fontWeight: 600, color: '#3b82f6' }}>
+                        {route.distance_km.toFixed(2)} km
+                      </td>
+                      <td>
+                        <button
+                          onClick={() => deleteRoute(route.id)}
+                          style={{
+                            padding: '6px 12px',
+                            backgroundColor: '#fee2e2',
+                            border: '1px solid #fecaca',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            color: '#991b1b',
+                            fontSize: '13px',
+                            fontWeight: 500
+                          }}
+                          data-testid={`delete-route-${route.id}`}
+                        >
+                          🗑️ Eliminar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+        </>
       )}
     </div>
   );

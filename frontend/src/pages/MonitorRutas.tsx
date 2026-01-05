@@ -127,16 +127,21 @@ function MonitorRutas() {
     setCalculateRoute(true);
   };
 
-  const directionsCallback = (result: google.maps.DirectionsResult | null, status: google.maps.DirectionsStatus) => {
+  const directionsCallback = async (result: google.maps.DirectionsResult | null, status: google.maps.DirectionsStatus) => {
     if (status === 'OK' && result) {
       setDirections(result);
       setCalculateRoute(false);
       setCalculatingRoute(false);
       
       const route = result.routes[0];
-      const distance = route.legs[0].distance?.text || 'N/A';
+      const distanceText = route.legs[0].distance?.text || 'N/A';
+      const distanceKm = route.legs[0].distance?.value ? route.legs[0].distance.value / 1000 : 0;
       const duration = route.legs[0].duration?.text || 'N/A';
-      showToast(`Ruta calculada: ${distance}, ${duration}`, 'success');
+      
+      showToast(`Ruta calculada: ${distanceText}, ${duration}`, 'success');
+      
+      // Guardar la ruta en la base de datos
+      await saveRoute(distanceKm);
     } else {
       console.error('Error al calcular la ruta:', status);
       setCalculateRoute(false);
@@ -153,6 +158,76 @@ function MonitorRutas() {
       
       showToast(errorMessage, 'error');
     }
+  };
+
+  const saveRoute = async (distanceKm: number) => {
+    try {
+      setSavingRoute(true);
+      
+      const routeData = {
+        vehicle_id: selectedVehicle,
+        origin: origin,
+        destination: destination,
+        distance_km: distanceKm,
+        fuel_consumed: 0, // Puedes calcular esto basándote en distancia y consumo promedio
+        start_time: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from('routes')
+        .insert([routeData]);
+
+      if (error) {
+        console.error('Error saving route:', error);
+        showToast('Ruta calculada pero no se pudo guardar en el historial.', 'warning');
+        return;
+      }
+
+      showToast('Ruta guardada en el historial exitosamente.', 'success');
+      
+      // Limpiar formulario
+      setOrigin('');
+      setDestination('');
+      setDirections(null);
+      
+      // Recargar rutas
+      fetchRoutes();
+    } catch (error) {
+      console.error('Error:', error);
+      showToast('Error al guardar la ruta.', 'error');
+    } finally {
+      setSavingRoute(false);
+    }
+  };
+
+  const deleteRoute = async (routeId: string) => {
+    if (!confirm('¿Estás seguro de eliminar esta ruta del historial?')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('routes')
+        .delete()
+        .eq('id', routeId);
+
+      if (error) {
+        console.error('Error deleting route:', error);
+        showToast('Error al eliminar la ruta.', 'error');
+        return;
+      }
+
+      showToast('Ruta eliminada del historial.', 'success');
+      fetchRoutes();
+    } catch (error) {
+      console.error('Error:', error);
+      showToast('Error al eliminar la ruta.', 'error');
+    }
+  };
+
+  const getVehicleName = (vehicleId: string) => {
+    const vehicle = vehicles.find(v => v.id === vehicleId);
+    return vehicle ? `${vehicle.name} (${vehicle.plate})` : 'N/A';
   };
 
   return (

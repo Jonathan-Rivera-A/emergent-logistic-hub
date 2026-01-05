@@ -21,6 +21,17 @@ interface Vehicle {
   status: string;
 }
 
+interface Route {
+  id: string;
+  vehicle_id: string;
+  origin: string;
+  destination: string;
+  distance_km: number;
+  fuel_consumed: number;
+  start_time: string;
+  created_at: string;
+}
+
 interface ToastState {
   show: boolean;
   message: string;

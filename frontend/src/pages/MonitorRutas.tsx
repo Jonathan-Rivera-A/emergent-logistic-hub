@@ -248,11 +248,12 @@ function MonitorRutas() {
       {loading ? (
         <LoadingSpinner />
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '24px', height: 'calc(100vh - 180px)' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div className="card" style={{ marginBottom: 0 }}>
-              <h2>Planificar Ruta</h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '24px', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="card" style={{ marginBottom: 0 }}>
+                <h2>Planificar Ruta</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
                     Unidad

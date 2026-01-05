@@ -371,7 +371,7 @@ function MonitorRutas() {
             </div>
           </div>
 
-          <div className="card" style={{ marginBottom: 0, padding: 0, overflow: 'hidden' }}>
+          <div className="card" style={{ marginBottom: 0, padding: 0, overflow: 'hidden', height: '500px' }}>
             <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY_HERE'}>
               <GoogleMap
                 mapContainerStyle={mapContainerStyle}

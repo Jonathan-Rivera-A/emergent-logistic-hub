@@ -40,6 +40,7 @@ interface ToastState {
 
 function MonitorRutas() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [routes, setRoutes] = useState<Route[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState<string | null>(null);
   const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
   const [origin, setOrigin] = useState('');
@@ -47,10 +48,12 @@ function MonitorRutas() {
   const [calculateRoute, setCalculateRoute] = useState(false);
   const [loading, setLoading] = useState(true);
   const [calculatingRoute, setCalculatingRoute] = useState(false);
+  const [savingRoute, setSavingRoute] = useState(false);
   const [toast, setToast] = useState<ToastState>({ show: false, message: '', type: 'info' });
 
   useEffect(() => {
     fetchVehicles();
+    fetchRoutes();
   }, []);
 
   const showToast = (message: string, type: ToastState['type']) => {
@@ -82,6 +85,27 @@ function MonitorRutas() {
       showToast('Error inesperado al cargar las unidades.', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRoutes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('routes')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) {
+        console.error('Error fetching routes:', error);
+        return;
+      }
+
+      if (data) {
+        setRoutes(data);
+      }
+    } catch (error) {
+      console.error('Error:', error);
     }
   };
 

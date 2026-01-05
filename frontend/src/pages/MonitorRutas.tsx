@@ -48,7 +48,6 @@ function MonitorRutas() {
   const [calculateRoute, setCalculateRoute] = useState(false);
   const [loading, setLoading] = useState(true);
   const [calculatingRoute, setCalculatingRoute] = useState(false);
-  const [savingRoute, setSavingRoute] = useState(false);
   const [toast, setToast] = useState<ToastState>({ show: false, message: '', type: 'info' });
 
   useEffect(() => {

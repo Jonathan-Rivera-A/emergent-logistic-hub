@@ -161,8 +161,6 @@ function MonitorRutas() {
 
   const saveRoute = async (distanceKm: number) => {
     try {
-      setSavingRoute(true);
-      
       const routeData = {
         vehicle_id: selectedVehicle,
         origin: origin,
@@ -194,8 +192,6 @@ function MonitorRutas() {
     } catch (error) {
       console.error('Error:', error);
       showToast('Error al guardar la ruta.', 'error');
-    } finally {
-      setSavingRoute(false);
     }
   };
 

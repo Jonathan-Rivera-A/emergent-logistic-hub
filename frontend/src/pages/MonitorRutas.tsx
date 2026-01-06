@@ -21,14 +21,26 @@ interface Vehicle {
   status: string;
 }
 
+interface Route {
+  id: string;
+  vehicle_id: string;
+  origin: string;
+  destination: string;
+  fuel_consumed: string;
+  distance_km: string;
+  start_time: string;
+  created_at: string;
+}
+
 interface ToastState {
   show: boolean;
   message: string;
   type: 'success' | 'error' | 'warning' | 'info';
 }
 
-function MonitorRutas() {
+export default function MonitorRutas() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [routes, setRoutes] = useState<Route[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState<string | null>(null);
   const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
   const [origin, setOrigin] = useState('');
@@ -40,6 +52,7 @@ function MonitorRutas() {
 
   useEffect(() => {
     fetchVehicles();
+    fetchRoutes();
   }, []);
 
   const showToast = (message: string, type: ToastState['type']) => {
@@ -74,6 +87,28 @@ function MonitorRutas() {
     }
   };
 
+  const fetchRoutes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('routes')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) {
+        console.error('Error fetching routes:', error);
+        return;
+      }
+
+      if (data) {
+        setRoutes(data);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+
   const handleCalculateRoute = () => {
     if (!origin.trim()) {
       showToast('Por favor ingresa un punto de origen.', 'warning');
@@ -92,16 +127,20 @@ function MonitorRutas() {
     setCalculateRoute(true);
   };
 
-  const directionsCallback = (result: google.maps.DirectionsResult | null, status: google.maps.DirectionsStatus) => {
+  const directionsCallback = async(result: google.maps.DirectionsResult | null, status: google.maps.DirectionsStatus) => {
     if (status === 'OK' && result) {
       setDirections(result);
       setCalculateRoute(false);
       setCalculatingRoute(false);
       
       const route = result.routes[0];
-      const distance = route.legs[0].distance?.text || 'N/A';
+      const distanceText = route.legs[0].distance?.text || 'N/A';
+    /*Extracion numerica de distancia pior kilometro*/
+      const distanceKm = route.legs[0].distance?.value ? route.legs[0].distance!.value / 1000 : 0;
       const duration = route.legs[0].duration?.text || 'N/A';
-      showToast(`Ruta calculada: ${distance}, ${duration}`, 'success');
+      showToast(`Ruta calculada: ${distanceText}, ${duration}`, 'success');
+      // Guardamos la ruta en la base de datos
+      await saveRoute(distanceKm);
     } else {
       console.error('Error al calcular la ruta:', status);
       setCalculateRoute(false);
@@ -118,6 +157,74 @@ function MonitorRutas() {
       
       showToast(errorMessage, 'error');
     }
+  };
+
+  const saveRoute = async (distanceKm: number) => {
+    try {
+      
+      const routeData = {
+        vehicle_id: selectedVehicle,
+        origin: origin,
+        destination: destination,
+        distance_km: distanceKm,
+        fuel_consumed: 0, // Puedes calcular esto basándote en distancia y consumo promedio
+        start_time: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from('routes')
+        .insert([routeData]);
+
+      if (error) {
+        console.error('Error saving route:', error);
+        showToast('Ruta calculada pero no se pudo guardar en el historial.', 'warning');
+        return;
+      }
+
+      showToast('Ruta guardada en el historial exitosamente.', 'success');
+      
+      // Limpiar formulario
+      setOrigin('');
+      setDestination('');
+      setDirections(null);
+      
+      // Recargar rutas
+      fetchRoutes();
+    } catch (error) {
+      console.error('Error:', error);
+      showToast('Error al guardar la ruta.', 'error');
+
+    }
+  };
+
+  const deleteRoute = async (routeId: string) => {
+    if (!confirm('¿Estás seguro de eliminar esta ruta del historial?')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('routes')
+        .delete()
+        .eq('id', routeId);
+
+      if (error) {
+        console.error('Error deleting route:', error);
+        showToast('Error al eliminar la ruta.', 'error');
+        return;
+      }
+
+      showToast('Ruta eliminada del historial.', 'success');
+      fetchRoutes();
+    } catch (error) {
+      console.error('Error:', error);
+      showToast('Error al eliminar la ruta.', 'error');
+    }
+  };
+
+  const getVehicleName = (vehicleId: string) => {
+    const vehicle = vehicles.find(v => v.id === vehicleId);
+    return vehicle ? `${vehicle.name} (${vehicle.plate})` : 'N/A';
   };
 
   return (
@@ -138,9 +245,10 @@ function MonitorRutas() {
       {loading ? (
         <LoadingSpinner />
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '24px', height: 'calc(100vh - 180px)' }}>
+        <>
+        <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '24px', marginBottom: '24px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div className="card" style={{ marginBottom: 0 }}>
+            <div className="card" style={{ marginBottom: 0, padding: 0, overflow: 'hidden', height: '500px'  }}>
               <h2>Planificar Ruta</h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div>
@@ -176,7 +284,7 @@ function MonitorRutas() {
                     type="text"
                     value={origin}
                     onChange={(e) => setOrigin(e.target.value)}
-                    placeholder="Ciudad de México"
+                    placeholder="Crucero San Luis de la Paz"
                     style={{
                       width: '100%',
                       padding: '10px',
@@ -260,7 +368,7 @@ function MonitorRutas() {
             </div>
           </div>
 
-          <div className="card" style={{ marginBottom: 0, padding: 0, overflow: 'hidden' }}>
+          <div className="card" style={{ marginBottom: 0, padding: 0, overflow: 'hidden', height: '500px'  }}>
             <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY_HERE'}>
               <GoogleMap
                 mapContainerStyle={mapContainerStyle}
@@ -293,9 +401,93 @@ function MonitorRutas() {
             </LoadScript>
           </div>
         </div>
+
+        {/* Tabla de Historial de Rutas */}
+        <div className="card" style={{ padding: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h2 style={{ margin: 0 }}>Historial de Rutas Calculadas</h2>
+            <span style={{ fontSize: '14px', color: '#6b7280' }}>
+              {routes.length} {routes.length === 1 ? 'ruta' : 'rutas'}
+            </span>
+          </div>
+
+          {routes.length === 0 ? (
+            <div style={{ 
+              textAlign: 'center', 
+              padding: '40px', 
+              color: '#6b7280',
+              backgroundColor: '#f9fafb',
+              borderRadius: '8px'
+            }}>
+              <p style={{ margin: 0, fontSize: '14px' }}>
+                No hay rutas calculadas aún. Calcula una ruta para ver el historial aquí.
+              </p>
+            </div>
+          ) : (
+            <div style={{ overflow: 'auto' }}>
+              <table className="data-table\">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Unidad</th>
+                    <th>Origen</th>
+                    <th>Destino</th>
+                    <th>Distancia (km)</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                    {routes.map((route) => (
+                      <tr key={route.id} data-testid={`route-row-${route.id}`}>
+                        <td style={{ fontSize: '13px' }}>
+                          {new Date(route.created_at).toLocaleDateString('es-MX', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </td>
+                        <td style={{ fontWeight: 500, color: '#1f2937' }}>
+                          {getVehicleName(route.vehicle_id)}
+                        </td>
+                        <td>{route.origin}</td>
+                        <td>{route.destination}</td>
+                        <td style={{ fontWeight: 600, color: '#3b82f6' }}>
+                          {Number(route.distance_km).toFixed(2)} km
+                        </td>
+                        <td>
+                          <button
+                            onClick={() => deleteRoute(route.id)}
+                            style={{
+                              padding: '6px 12px',
+                              backgroundColor: '#fee2e2',
+                              border: '1px solid #fecaca',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              color: '#991b1b',
+                              fontSize: '13px',
+                              fontWeight: 500
+                            }}
+                            data-testid={`delete-route-${route.id}`}
+                          >
+                            🗑️ Eliminar
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+        </>
       )}
     </div>
   );
 }
 
-export default MonitorRutas;
+

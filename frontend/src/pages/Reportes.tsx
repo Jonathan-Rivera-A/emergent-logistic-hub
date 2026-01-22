@@ -171,21 +171,60 @@ function Reportes() {
       ) : (
         <>
           <div className="stats-grid">
-        <div className="stat-card" style={{ borderLeftColor: '#3b82f6' }}>
-          <h3>
-            <Fuel size={16} style={{ display: 'inline', marginRight: '8px' }} />
-            Combustible Total
-          </h3>
-          <div className="stat-value">{stats.totalFuelConsumed.toFixed(1)} L</div>
-          <div className="stat-label">Últimas 50 rutas</div>
-        </div>
+            <div className="stat-card" style={{ borderLeftColor: '#3b82f6' }}>
+              <h3>
+                <Fuel size={16} style={{ display: 'inline', marginRight: '8px' }} />
+                Combustible Total
+              </h3>
+              <div className="stat-value">{stats.totalFuelConsumed.toFixed(1)} L</div>
+              <div className="stat-label">Últimas 50 rutas</div>
+            </div>
 
-        <div className="stat-card" style={{ borderLeftColor: '#10b981' }}>
-          <h3>
-            <Navigation size={16} style={{ display: 'inline', marginRight: '8px' }} />
-            Kilómetros
-          </h3>
-          <div className="stat-value">{stats.totalDistance.toFixed(0)} km</div>
+            <div className="stat-card" style={{ borderLeftColor: '#10b981' }}>
+              <h3>
+                <Navigation size={16} style={{ display: 'inline', marginRight: '8px' }} />
+                Distancia Total
+              </h3>
+              <div className="stat-value">{stats.totalDistance.toFixed(0)} km</div>
+              <div className="stat-label">Kilómetros recorridos</div>
+            </div>
+
+            <div className="stat-card" style={{ borderLeftColor: '#f59e0b' }}>
+              <h3>
+                <Fuel size={16} style={{ display: 'inline', marginRight: '8px' }} />
+                Consumo Promedio
+              </h3>
+              <div className="stat-value">{stats.averageConsumptionPer100km.toFixed(2)} L/100km</div>
+              <div className="stat-label">Consumo por distancia</div>
+            </div>
+
+            <div className="stat-card" style={{ borderLeftColor: '#10b981' }}>
+              <h3>
+                <Activity size={16} style={{ display: 'inline', marginRight: '8px' }} />
+                Rendimiento Promedio
+              </h3>
+              <div className="stat-value">{stats.averageEfficiencyKmPerLiter.toFixed(2)} km/L</div>
+              <div className="stat-label">Eficiencia de combustible</div>
+            </div>
+
+            <div className="stat-card" style={{ borderLeftColor: '#8b5cf6' }}>
+              <h3>
+                <Thermometer size={16} style={{ display: 'inline', marginRight: '8px' }} />
+                Horas de Motor
+              </h3>
+              <div className="stat-value">{stats.totalMotorHours.toFixed(1)} hrs</div>
+              <div className="stat-label">Total acumulado</div>
+            </div>
+
+            <div className="stat-card" style={{ borderLeftColor: '#ef4444' }}>
+              <h3>
+                <Activity size={16} style={{ display: 'inline', marginRight: '8px' }} />
+                Unidades Activas
+              </h3>
+              <div className="stat-value">{stats.activeVehicles}</div>
+              <div className="stat-label">En operación</div>
+            </div>
+          </div>
           <div className="stat-label">Distancia recorrida</div>
         </div>
 

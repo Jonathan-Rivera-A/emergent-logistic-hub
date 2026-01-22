@@ -126,21 +126,29 @@ function Reportes() {
     }
   };
 
-  const vehicleStatusData = [
-    { name: 'Activos', value: vehicles.filter(v => v.status === 'active').length },
-    { name: 'Inactivos', value: vehicles.filter(v => v.status === 'inactive').length },
-    { name: 'Mantenimiento', value: vehicles.filter(v => v.status === 'maintenance').length },
-  ];
+  // Preparar datos para gráficas
+  const consumptionByVehicleData = vehicles.map(vehicle => {
+    const vehicleRoutes = routes.filter(r => r.vehicle_id === vehicle.id);
+    const avgConsumption = vehicleRoutes.length > 0
+      ? vehicleRoutes.reduce((acc, r) => acc + (r.consumption_per_100km || 0), 0) / vehicleRoutes.length
+      : 0;
+    const avgEfficiency = vehicleRoutes.length > 0
+      ? vehicleRoutes.reduce((acc, r) => acc + (r.efficiency_km_per_liter || 0), 0) / vehicleRoutes.length
+      : 0;
+    
+    return {
+      name: vehicle.name,
+      consumo: parseFloat(avgConsumption.toFixed(2)),
+      rendimiento: parseFloat(avgEfficiency.toFixed(2)),
+      rutas: vehicleRoutes.length,
+    };
+  }).filter(v => v.rutas > 0);
 
-  const fuelConsumptionData = routes.slice(0, 10).map((route, index) => ({
-    name: `Ruta ${index + 1}`,
-    combustible: route.fuel_consumed,
+  const recentRoutesData = routes.slice(0, 10).map((route, index) => ({
+    name: `Ruta ${routes.length - index}`,
+    'L/100km': route.consumption_per_100km || 0,
+    'km/L': route.efficiency_km_per_liter || 0,
     distancia: route.distance_km,
-  }));
-
-  const temperatureData = vehicles.map(vehicle => ({
-    name: vehicle.name,
-    temperatura: vehicle.current_temperature,
   }));
 
   return (

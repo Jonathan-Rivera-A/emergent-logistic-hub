@@ -351,6 +351,56 @@ function MonitorRutas() {
                   />
                 </div>
 
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
+                    Litros Consumidos ⛽
+                  </label>
+                  <input
+                    type="number"
+                    value={fuelLiters || ''}
+                    onChange={(e) => setFuelLiters(parseFloat(e.target.value) || 0)}
+                    placeholder="50.5"
+                    min="0"
+                    step="0.1"
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      borderRadius: '6px',
+                      border: '1px solid #d1d5db',
+                      fontSize: '14px'
+                    }}
+                    data-testid="fuel-input"
+                  />
+                  <span style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', display: 'block' }}>
+                    Estimado de combustible para la ruta
+                  </span>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
+                    Horas de Motor 🕐
+                  </label>
+                  <input
+                    type="number"
+                    value={motorHours || ''}
+                    onChange={(e) => setMotorHours(parseFloat(e.target.value) || 0)}
+                    placeholder="6.5"
+                    min="0"
+                    step="0.1"
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      borderRadius: '6px',
+                      border: '1px solid #d1d5db',
+                      fontSize: '14px'
+                    }}
+                    data-testid="hours-input"
+                  />
+                  <span style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', display: 'block' }}>
+                    Tiempo estimado con motor encendido
+                  </span>
+                </div>
+
                 <button
                   onClick={handleCalculateRoute}
                   disabled={!origin || !destination || !selectedVehicle || calculatingRoute}

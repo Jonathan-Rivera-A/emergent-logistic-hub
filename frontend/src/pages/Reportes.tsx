@@ -344,103 +344,82 @@ function Reportes() {
             <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '16px' }}>
               Información completa de las últimas 20 rutas calculadas
             </p>
-            </ResponsiveContainer>
+            {routes.length === 0 ? (
+              <div style={{ 
+                textAlign: 'center', 
+                padding: '40px', 
+                color: '#6b7280',
+                backgroundColor: '#f9fafb',
+                borderRadius: '8px'
+              }}>
+                <p style={{ margin: 0, fontSize: '14px' }}>
+                  No hay rutas registradas. Ve a Monitor de Rutas para calcular y guardar rutas.
+                </p>
+              </div>
+            ) : (
+              <div style={{ overflow: 'auto' }}>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Unidad</th>
+                      <th>Ruta</th>
+                      <th>Distancia<br/>(km)</th>
+                      <th>Combustible<br/>(L)</th>
+                      <th>Horas Motor</th>
+                      <th style={{ background: '#fef3c7' }}>Consumo<br/>(L/100km)</th>
+                      <th style={{ background: '#d1fae5' }}>Rendimiento<br/>(km/L)</th>
+                      <th style={{ background: '#e9d5ff' }}>Consumo/Hora<br/>(L/h)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {routes.slice(0, 20).map((route) => {
+                      const vehicle = vehicles.find(v => v.id === route.vehicle_id);
+                      return (
+                        <tr key={route.id}>
+                          <td style={{ fontSize: '13px' }}>
+                            {new Date(route.created_at).toLocaleDateString('es-MX', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </td>
+                          <td style={{ fontWeight: 500 }}>
+                            {vehicle ? `${vehicle.name} (${vehicle.plate})` : 'N/A'}
+                          </td>
+                          <td>
+                            <div style={{ fontSize: '13px' }}>
+                              <div>{route.origin}</div>
+                              <div style={{ color: '#6b7280' }}>→ {route.destination}</div>
+                            </div>
+                          </td>
+                          <td style={{ fontWeight: 600, color: '#3b82f6' }}>
+                            {route.distance_km.toFixed(2)}
+                          </td>
+                          <td style={{ fontWeight: 600 }}>
+                            {route.fuel_liters ? route.fuel_liters.toFixed(2) : 'N/A'}
+                          </td>
+                          <td>
+                            {route.motor_hours ? route.motor_hours.toFixed(1) : 'N/A'}
+                          </td>
+                          <td style={{ fontWeight: 700, color: '#f59e0b', background: '#fef3c7' }}>
+                            {route.consumption_per_100km ? route.consumption_per_100km.toFixed(2) : 'N/A'}
+                          </td>
+                          <td style={{ fontWeight: 700, color: '#10b981', background: '#d1fae5' }}>
+                            {route.efficiency_km_per_liter ? route.efficiency_km_per_liter.toFixed(2) : 'N/A'}
+                          </td>
+                          <td style={{ fontWeight: 700, color: '#8b5cf6', background: '#e9d5ff' }}>
+                            {route.consumption_per_hour ? route.consumption_per_hour.toFixed(2) : 'N/A'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-        </div>
-
-        <div className="card">
-          <h2>Estado de las Unidades</h2>
-          <div className="chart-container">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={vehicleStatusData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, value }) => `${name}: ${value}`}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {vehicleStatusData.map((_entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className="card">
-          <h2>Temperatura de Unidades</h2>
-          <div className="chart-container">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={temperatureData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-                  }}
-                />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="temperatura"
-                  stroke="#ef4444"
-                  strokeWidth={2}
-                  name="Temperatura (°C)"
-                  dot={{ fill: '#ef4444', r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className="card">
-          <h2>Detalles de Unidades</h2>
-          <div style={{ maxHeight: '350px', overflow: 'auto' }}>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Unidad</th>
-                  <th>Placa</th>
-                  <th>Estado</th>
-                  <th>Temperatura</th>
-                </tr>
-              </thead>
-              <tbody>
-                {vehicles.map(vehicle => (
-                  <tr key={vehicle.id}>
-                    <td style={{ fontWeight: 500, color: '#1f2937' }}>{vehicle.name}</td>
-                    <td>{vehicle.plate}</td>
-                    <td>
-                      <span className={`status-badge ${vehicle.status}`}>
-                        {vehicle.status === 'active' ? 'Activo' :
-                         vehicle.status === 'inactive' ? 'Inactivo' : 'Mantenimiento'}
-                      </span>
-                    </td>
-                    <td>{vehicle.current_temperature}°C</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
         </>
       )}
     </div>

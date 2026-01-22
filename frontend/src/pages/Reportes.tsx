@@ -225,49 +225,125 @@ function Reportes() {
               <div className="stat-label">En operación</div>
             </div>
           </div>
-          <div className="stat-label">Distancia recorrida</div>
-        </div>
 
-        <div className="stat-card" style={{ borderLeftColor: '#f59e0b' }}>
-          <h3>
-            <Activity size={16} style={{ display: 'inline', marginRight: '8px' }} />
-            Unidades Activas
-          </h3>
-          <div className="stat-value">{stats.activeVehicles}</div>
-          <div className="stat-label">De {vehicles.length} unidades</div>
-        </div>
+          {/* Gráficas de Consumo y Rendimiento */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))', gap: '24px', marginTop: '24px' }}>
+            {/* Gráfica 1: Consumo Promedio por Vehículo */}
+            <div className="card">
+              <h2>📊 Consumo Promedio por Vehículo</h2>
+              <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '16px' }}>
+                Litros consumidos cada 100 kilómetros
+              </p>
+              <div className="chart-container">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={consumptionByVehicleData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} label={{ value: 'L/100km', angle: -90, position: 'insideLeft' }} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                    <Legend />
+                    <Bar dataKey="consumo" fill="#f59e0b" name="Consumo (L/100km)" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
 
-        <div className="stat-card" style={{ borderLeftColor: '#ef4444' }}>
-          <h3>
-            <Thermometer size={16} style={{ display: 'inline', marginRight: '8px' }} />
-            Temperatura Promedio
-          </h3>
-          <div className="stat-value">{stats.averageTemperature.toFixed(1)}°C</div>
-          <div className="stat-label">Temperatura de flota</div>
-        </div>
-      </div>
+            {/* Gráfica 2: Rendimiento por Vehículo */}
+            <div className="card">
+              <h2>⚡ Rendimiento por Vehículo</h2>
+              <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '16px' }}>
+                Kilómetros recorridos por litro
+              </p>
+              <div className="chart-container">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={consumptionByVehicleData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} label={{ value: 'km/L', angle: -90, position: 'insideLeft' }} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                    <Legend />
+                    <Bar dataKey="rendimiento" fill="#10b981" name="Rendimiento (km/L)" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))', gap: '24px' }}>
-        <div className="card">
-          <h2>Consumo de Combustible por Ruta</h2>
-          <div className="chart-container">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={fuelConsumptionData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-                  }}
-                />
-                <Legend />
-                <Bar dataKey="combustible" fill="#3b82f6" name="Combustible (L)" radius={[8, 8, 0, 0]} />
-                <Bar dataKey="distancia" fill="#10b981" name="Distancia (km)" radius={[8, 8, 0, 0]} />
-              </BarChart>
+            {/* Gráfica 3: Tendencia de Consumo en Últimas Rutas */}
+            <div className="card">
+              <h2>📈 Tendencia de Consumo - Últimas 10 Rutas</h2>
+              <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '16px' }}>
+                Comparación de consumo y rendimiento
+              </p>
+              <div className="chart-container">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={recentRoutesData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                    <Legend />
+                    <Line type="monotone" dataKey="L/100km" stroke="#f59e0b" strokeWidth={2} name="Consumo (L/100km)" />
+                    <Line type="monotone" dataKey="km/L" stroke="#10b981" strokeWidth={2} name="Rendimiento (km/L)" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Gráfica 4: Distancia vs Combustible */}
+            <div className="card">
+              <h2>🚛 Distancia vs Combustible</h2>
+              <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '16px' }}>
+                Relación en las últimas 10 rutas
+              </p>
+              <div className="chart-container">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={recentRoutesData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                    <Legend />
+                    <Bar dataKey="distancia" fill="#3b82f6" name="Distancia (km)" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+          {/* Tabla Detallada de Rutas */}
+          <div className="card" style={{ marginTop: '24px' }}>
+            <h2>📋 Detalle de Rutas con Consumo</h2>
+            <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '16px' }}>
+              Información completa de las últimas 20 rutas calculadas
+            </p>
             </ResponsiveContainer>
           </div>
         </div>

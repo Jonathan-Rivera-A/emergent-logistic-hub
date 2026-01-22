@@ -167,12 +167,38 @@ function MonitorRutas() {
 
   const saveRoute = async (distanceKm: number) => {
     try {
+      // Validar que se hayan ingresado litros consumidos
+      if (!fuelLiters || fuelLiters <= 0) {
+        showToast('Por favor ingresa los litros de combustible consumidos.', 'warning');
+        return;
+      }
+
+      // Validar que se hayan ingresado horas de motor
+      if (!motorHours || motorHours <= 0) {
+        showToast('Por favor ingresa las horas de motor.', 'warning');
+        return;
+      }
+
+      // Calcular indicadores de consumo
+      // 🔹 Consumo por distancia (L/100km)
+      const consumptionPer100km = (fuelLiters / distanceKm) * 100;
+      
+      // 🔹 Rendimiento (km/L)
+      const efficiencyKmPerLiter = distanceKm / fuelLiters;
+      
+      // 🔹 Consumo por hora (L/h)
+      const consumptionPerHour = fuelLiters / motorHours;
+      
       const routeData = {
         vehicle_id: selectedVehicle,
         origin: origin,
         destination: destination,
         distance_km: distanceKm,
-        fuel_consumed: 0, // Puedes calcular esto basándote en distancia y consumo promedio
+        fuel_liters: fuelLiters,
+        motor_hours: motorHours,
+        consumption_per_100km: parseFloat(consumptionPer100km.toFixed(2)),
+        efficiency_km_per_liter: parseFloat(efficiencyKmPerLiter.toFixed(2)),
+        consumption_per_hour: parseFloat(consumptionPerHour.toFixed(2)),
         start_time: new Date().toISOString(),
       };
 
@@ -186,11 +212,16 @@ function MonitorRutas() {
         return;
       }
 
-      showToast('Ruta guardada en el historial exitosamente.', 'success');
+      showToast(
+        `Ruta guardada. Consumo: ${consumptionPer100km.toFixed(2)} L/100km | Rendimiento: ${efficiencyKmPerLiter.toFixed(2)} km/L`,
+        'success'
+      );
       
       // Limpiar formulario
       setOrigin('');
       setDestination('');
+      setFuelLiters(0);
+      setMotorHours(0);
       setDirections(null);
       
       // Recargar rutas

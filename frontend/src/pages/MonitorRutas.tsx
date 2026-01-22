@@ -538,10 +538,23 @@ function MonitorRutas() {
                       <td style={{ fontWeight: 500, color: '#1f2937' }}>
                         {getVehicleName(route.vehicle_id)}
                       </td>
-                      <td>{route.origin}</td>
-                      <td>{route.destination}</td>
+                      <td>
+                        <div style={{ fontSize: '13px' }}>
+                          <div style={{ fontWeight: 500 }}>{route.origin}</div>
+                          <div style={{ color: '#6b7280' }}>→ {route.destination}</div>
+                        </div>
+                      </td>
                       <td style={{ fontWeight: 600, color: '#3b82f6' }}>
                         {route.distance_km.toFixed(2)} km
+                      </td>
+                      <td style={{ fontWeight: 600, color: '#f59e0b' }}>
+                        {route.consumption_per_100km ? route.consumption_per_100km.toFixed(2) : 'N/A'}
+                      </td>
+                      <td style={{ fontWeight: 600, color: '#10b981' }}>
+                        {route.efficiency_km_per_liter ? route.efficiency_km_per_liter.toFixed(2) : 'N/A'}
+                      </td>
+                      <td style={{ fontWeight: 600, color: '#8b5cf6' }}>
+                        {route.consumption_per_hour ? route.consumption_per_hour.toFixed(2) : 'N/A'}
                       </td>
                       <td>
                         <button

@@ -29,8 +29,6 @@ interface Route {
   created_at: string;
 }
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
-
 interface ToastState {
   show: boolean;
   message: string;

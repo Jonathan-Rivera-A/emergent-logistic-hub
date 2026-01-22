@@ -94,13 +94,28 @@ function Reportes() {
 
       if (routesData) {
         setRoutes(routesData);
-        const totalFuel = routesData.reduce((acc, r) => acc + (r.fuel_consumed || 0), 0);
+        const totalFuel = routesData.reduce((acc, r) => acc + (r.fuel_liters || 0), 0);
         const totalDist = routesData.reduce((acc, r) => acc + (r.distance_km || 0), 0);
+        const totalHours = routesData.reduce((acc, r) => acc + (r.motor_hours || 0), 0);
+        
+        // Calcular promedios
+        const routesWithConsumption = routesData.filter(r => r.consumption_per_100km);
+        const avgConsumption = routesWithConsumption.length > 0
+          ? routesWithConsumption.reduce((acc, r) => acc + r.consumption_per_100km, 0) / routesWithConsumption.length
+          : 0;
+          
+        const routesWithEfficiency = routesData.filter(r => r.efficiency_km_per_liter);
+        const avgEfficiency = routesWithEfficiency.length > 0
+          ? routesWithEfficiency.reduce((acc, r) => acc + r.efficiency_km_per_liter, 0) / routesWithEfficiency.length
+          : 0;
 
         setStats(prev => ({
           ...prev,
           totalFuelConsumed: totalFuel,
           totalDistance: totalDist,
+          totalMotorHours: totalHours,
+          averageConsumptionPer100km: avgConsumption,
+          averageEfficiencyKmPerLiter: avgEfficiency,
         }));
       }
     } catch (error) {

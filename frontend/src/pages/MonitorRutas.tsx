@@ -515,9 +515,11 @@ function MonitorRutas() {
                   <tr>
                     <th>Fecha</th>
                     <th>Unidad</th>
-                    <th>Origen</th>
-                    <th>Destino</th>
-                    <th>Distancia (km)</th>
+                    <th>Origen → Destino</th>
+                    <th>Distancia</th>
+                    <th>Consumo<br/>(L/100km)</th>
+                    <th>Rendimiento<br/>(km/L)</th>
+                    <th>Consumo/Hora<br/>(L/h)</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>

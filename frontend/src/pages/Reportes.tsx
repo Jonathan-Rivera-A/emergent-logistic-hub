@@ -47,6 +47,9 @@ function Reportes() {
     totalDistance: 0,
     activeVehicles: 0,
     averageTemperature: 0,
+    averageConsumptionPer100km: 0,
+    averageEfficiencyKmPerLiter: 0,
+    totalMotorHours: 0,
   });
 
   useEffect(() => {

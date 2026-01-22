@@ -49,6 +49,8 @@ function MonitorRutas() {
   const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
+  const [fuelLiters, setFuelLiters] = useState<number>(0);
+  const [motorHours, setMotorHours] = useState<number>(0);
   const [calculateRoute, setCalculateRoute] = useState(false);
   const [loading, setLoading] = useState(true);
   const [calculatingRoute, setCalculatingRoute] = useState(false);

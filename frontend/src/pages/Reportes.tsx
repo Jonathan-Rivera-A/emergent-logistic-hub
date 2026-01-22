@@ -17,10 +17,16 @@ interface Vehicle {
 interface Route {
   id: string;
   vehicle_id: string;
+  origin: string;
+  destination: string;
   distance_km: number;
-  fuel_consumed: number;
+  fuel_liters: number;
+  motor_hours: number;
+  consumption_per_100km: number;
+  efficiency_km_per_liter: number;
+  consumption_per_hour: number;
   start_time: string;
-  end_time: string;
+  created_at: string;
 }
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];

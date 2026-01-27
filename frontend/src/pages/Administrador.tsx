@@ -11,6 +11,7 @@ interface Vehicle {
   status: string;
   current_temperature: number;
   fuel_capacity: number;
+  average_fuel_consumption: number; // L/100km
 }
 
 interface ToastState {

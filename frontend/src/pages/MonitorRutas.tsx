@@ -19,6 +19,7 @@ interface Vehicle {
   name: string;
   plate: string;
   status: string;
+  average_fuel_consumption: number; // L/100km
 }
 
 interface Route {

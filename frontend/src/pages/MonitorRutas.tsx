@@ -144,10 +144,24 @@ function MonitorRutas() {
       const distanceKm = route.legs[0].distance?.value ? route.legs[0].distance.value / 1000 : 0;
       const duration = route.legs[0].duration?.text || 'N/A';
       
-      showToast(`Ruta calculada: ${distanceText}, ${duration}`, 'success');
-      
-      // Guardar la ruta en la base de datos
-      await saveRoute(distanceKm);
+      // Calcular automáticamente basándose en el vehículo seleccionado
+      const vehicle = vehicles.find(v => v.id === selectedVehicle);
+      if (vehicle && vehicle.average_fuel_consumption > 0) {
+        // Calcular litros consumidos: (distancia * consumo_promedio) / 100
+        const calculatedFuelLiters = (distanceKm * vehicle.average_fuel_consumption) / 100;
+        setFuelLiters(parseFloat(calculatedFuelLiters.toFixed(2)));
+        
+        // Calcular horas de motor: distancia / 80 km/h (velocidad promedio)
+        const calculatedMotorHours = distanceKm / 80;
+        setMotorHours(parseFloat(calculatedMotorHours.toFixed(2)));
+        
+        showToast(
+          `Ruta calculada: ${distanceText}, ${duration}. Consumo estimado: ${calculatedFuelLiters.toFixed(2)}L`,
+          'success'
+        );
+      } else {
+        showToast(`Ruta calculada: ${distanceText}, ${duration}`, 'success');
+      }
     } else {
       console.error('Error al calcular la ruta:', status);
       setCalculateRoute(false);

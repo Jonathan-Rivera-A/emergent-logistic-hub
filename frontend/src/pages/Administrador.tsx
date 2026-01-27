@@ -272,6 +272,9 @@ function Administrador() {
                       </td>
                       <td>{vehicle.current_temperature}°C</td>
                       <td>{vehicle.fuel_capacity}L</td>
+                      <td style={{ fontWeight: 600, color: '#f59e0b' }}>
+                        {vehicle.average_fuel_consumption ? vehicle.average_fuel_consumption.toFixed(2) : 'N/A'}
+                      </td>
                       <td>
                         <div style={{ display: 'flex', gap: '8px' }}>
                           <button

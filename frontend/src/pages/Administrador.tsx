@@ -194,6 +194,7 @@ function Administrador() {
       status: 'active',
       current_temperature: 0,
       fuel_capacity: 0,
+      average_fuel_consumption: 0,
     });
   };
 

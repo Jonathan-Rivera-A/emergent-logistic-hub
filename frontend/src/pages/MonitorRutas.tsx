@@ -10,8 +10,8 @@ const mapContainerStyle = {
 };
 
 const center = {
-  lat: 19.4326,
-  lng: -99.1332,
+  lat: 21.2961,  // San Luis de la Paz, Guanajuato
+  lng: -100.5156,
 };
 
 interface Vehicle {

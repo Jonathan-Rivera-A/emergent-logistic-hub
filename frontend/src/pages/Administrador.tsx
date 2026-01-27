@@ -157,6 +157,7 @@ function Administrador() {
       status: vehicle.status,
       current_temperature: vehicle.current_temperature,
       fuel_capacity: vehicle.fuel_capacity,
+      average_fuel_consumption: vehicle.average_fuel_consumption || 0,
     });
     setShowAddModal(true);
   };

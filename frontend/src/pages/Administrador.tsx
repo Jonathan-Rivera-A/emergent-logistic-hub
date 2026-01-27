@@ -446,6 +446,30 @@ function Administrador() {
                     }}
                   />
                 </div>
+
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
+                    Consumo Promedio (L/100km) ⛽
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.average_fuel_consumption}
+                    onChange={(e) => setFormData({ ...formData, average_fuel_consumption: parseFloat(e.target.value) || 0 })}
+                    step="0.1"
+                    min="0"
+                    placeholder="8.5"
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      borderRadius: '6px',
+                      border: '1px solid #d1d5db',
+                      fontSize: '14px'
+                    }}
+                  />
+                  <span style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', display: 'block' }}>
+                    Consumo promedio del vehículo para cálculos automáticos
+                  </span>
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: '12px', marginTop: '24px', justifyContent: 'flex-end' }}>

@@ -435,6 +435,33 @@ function MonitorRutas() {
                 >
                   {calculatingRoute ? 'Calculando...' : 'Calcular Ruta'}
                 </button>
+
+                {directions && (
+                  <button
+                    onClick={() => {
+                      const route = directions.routes[0];
+                      const distanceKm = route.legs[0].distance?.value ? route.legs[0].distance.value / 1000 : 0;
+                      saveRoute(distanceKm);
+                    }}
+                    disabled={!fuelLiters || !motorHours}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      backgroundColor: '#10b981',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      cursor: (!fuelLiters || !motorHours) ? 'not-allowed' : 'pointer',
+                      opacity: (!fuelLiters || !motorHours) ? 0.5 : 1,
+                      marginTop: '8px'
+                    }}
+                    data-testid="save-route-button"
+                  >
+                    💾 Guardar Ruta en Historial
+                  </button>
+                )}
               </div>
             </div>
 

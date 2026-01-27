@@ -500,7 +500,7 @@ function MonitorRutas() {
               <GoogleMap
                 mapContainerStyle={mapContainerStyle}
                 center={center}
-                zoom={12}
+                zoom={14}
               >
                 {calculateRoute && origin && destination && (
                   <DirectionsService

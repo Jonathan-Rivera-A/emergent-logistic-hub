@@ -254,7 +254,8 @@ function Administrador() {
                     <th>Placa</th>
                     <th>Estado</th>
                     <th>Temperatura</th>
-                    <th>Capacidad Combustible</th>
+                    <th>Capacidad<br/>Combustible (L)</th>
+                    <th>Consumo Promedio<br/>(L/100km)</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>

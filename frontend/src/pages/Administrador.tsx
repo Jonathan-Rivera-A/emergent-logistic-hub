@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 import Toast from '../components/Toast';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { vehicleStatusLabel } from '../components/bi/chartStyles';
 
 interface Vehicle {
   id: string;
@@ -51,7 +52,6 @@ function Administrador() {
         .order('name');
 
       if (error) {
-        console.error('Error fetching vehicles:', error);
         showToast('Error al cargar las unidades.', 'error');
         return;
       }
@@ -60,7 +60,6 @@ function Administrador() {
         setVehicles(data);
       }
     } catch (error) {
-      console.error('Error:', error);
       showToast('Error inesperado al cargar las unidades.', 'error');
     } finally {
       setLoading(false);
@@ -100,7 +99,6 @@ function Administrador() {
           .eq('id', editingVehicle.id);
 
         if (error) {
-          console.error('Error updating vehicle:', error);
           if (error.code === '23505') {
             showToast('Ya existe una unidad con esta placa.', 'error');
           } else {
@@ -116,7 +114,6 @@ function Administrador() {
           .insert([formData]);
 
         if (error) {
-          console.error('Error inserting vehicle:', error);
           if (error.code === '23505') {
             showToast('Ya existe una unidad con esta placa.', 'error');
           } else {
@@ -139,7 +136,6 @@ function Administrador() {
       setEditingVehicle(null);
       fetchVehicles();
     } catch (error) {
-      console.error('Error:', error);
       showToast('Error inesperado al guardar la unidad.', 'error');
     } finally {
       setSubmitting(false);
@@ -167,7 +163,6 @@ function Administrador() {
           .eq('id', id);
 
         if (error) {
-          console.error('Error deleting vehicle:', error);
           showToast('Error al eliminar la unidad.', 'error');
           return;
         }
@@ -175,7 +170,6 @@ function Administrador() {
         showToast('Unidad eliminada exitosamente.', 'success');
         fetchVehicles();
       } catch (error) {
-        console.error('Error:', error);
         showToast('Error inesperado al eliminar la unidad.', 'error');
       }
     }
@@ -261,8 +255,7 @@ function Administrador() {
                       <td>{vehicle.plate}</td>
                       <td>
                         <span className={`status-badge ${vehicle.status}`}>
-                          {vehicle.status === 'active' ? 'Activo' :
-                           vehicle.status === 'inactive' ? 'Inactivo' : 'Mantenimiento'}
+                          {vehicleStatusLabel(vehicle.status)}
                         </span>
                       </td>
                       <td>{vehicle.current_temperature}°C</td>

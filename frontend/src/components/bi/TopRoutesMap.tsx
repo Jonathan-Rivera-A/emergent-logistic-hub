@@ -86,8 +86,9 @@ export default function TopRoutesMap({ routes, height = 520 }: Props) {
     try {
       const bounds = L.latLngBounds(allPts);
       if (bounds.isValid()) map.fitBounds(bounds, { padding: [30, 30], maxZoom: 9 });
-    } catch {
-      /* ignore */
+    } catch (err) {
+      // Non-critical: fitBounds failed for an edge case (e.g. no valid coords).
+      console.warn('[TopRoutesMap] fitBounds skipped:', err);
     }
   }, [routes]);
 

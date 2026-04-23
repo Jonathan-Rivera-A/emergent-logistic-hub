@@ -230,6 +230,43 @@ def route_path(ruta_id: int) -> dict:
 
 
 # ---------- Anomalies ----------
+def _score_routes(routes: pd.DataFrame) -> pd.DataFrame:
+    """Add a `score` column combining z-scores on distance/duration and a speed flag."""
+    r = routes.copy()
+
+    def _zscore(x: pd.Series) -> pd.Series:
+        s = x.std() or 1.0
+        return (x - x.mean()) / s
+
+    r["score"] = (
+        np.abs(_zscore(r["distancia_km"]))
+        + np.abs(_zscore(r["duracion_min"]))
+        + (r["vel_max"] > 120).astype(float) * 2
+    )
+    return r
+
+
+def _anomaly_reason(
+    vel_max: float,
+    distancia: float,
+    duracion: float,
+    dist_mean: float,
+    dist_std: float,
+    dur_mean: float,
+    dur_std: float,
+) -> str:
+    reasons: list[str] = []
+    if vel_max > 120:
+        reasons.append(f"velocidad máxima {vel_max:.0f} km/h")
+    if distancia > dist_mean + 2 * dist_std:
+        reasons.append("distancia atípica alta")
+    if duracion > dur_mean + 2 * dur_std:
+        reasons.append("duración atípica alta")
+    if not reasons:
+        reasons.append("patrón combinado atípico")
+    return ", ".join(reasons)
+
+
 def anomalies(
     limit: int = 30,
     dispositivo: Optional[str] = None,
@@ -240,34 +277,12 @@ def anomalies(
     if routes.empty:
         return []
 
-    r = routes.copy()
-    dist = r["distancia_km"].to_numpy()
-    dur = r["duracion_min"].to_numpy()
-    vmax = r["vel_max"].to_numpy()
+    scored = _score_routes(routes).sort_values("score", ascending=False).head(limit)
 
-    def z(x):
-        s = x.std() or 1.0
-        return (x - x.mean()) / s
-
-    r["score"] = np.abs(z(dist)) + np.abs(z(dur)) + (vmax > 120).astype(float) * 2
-    r = r.sort_values("score", ascending=False).head(limit)
-
-    dist_mean = float(dist.mean())
-    dist_std = float(dist.std() or 1)
-    dur_mean = float(dur.mean())
-    dur_std = float(dur.std() or 1)
-
-    def _reason(vel_max: float, distancia: float, duracion: float) -> str:
-        reasons = []
-        if vel_max > 120:
-            reasons.append(f"velocidad máxima {vel_max:.0f} km/h")
-        if distancia > dist_mean + 2 * dist_std:
-            reasons.append("distancia atípica alta")
-        if duracion > dur_mean + 2 * dur_std:
-            reasons.append("duración atípica alta")
-        if not reasons:
-            reasons.append("patrón combinado atípico")
-        return ", ".join(reasons)
+    dist = routes["distancia_km"].to_numpy()
+    dur = routes["duracion_min"].to_numpy()
+    dist_mean, dist_std = float(dist.mean()), float(dist.std() or 1)
+    dur_mean, dur_std = float(dur.mean()), float(dur.std() or 1)
 
     return [
         {
@@ -278,9 +293,12 @@ def anomalies(
             "duracion_min": float(row.duracion_min),
             "vel_max": float(row.vel_max),
             "score": round(float(row.score), 2),
-            "motivo": _reason(float(row.vel_max), float(row.distancia_km), float(row.duracion_min)),
+            "motivo": _anomaly_reason(
+                float(row.vel_max), float(row.distancia_km), float(row.duracion_min),
+                dist_mean, dist_std, dur_mean, dur_std,
+            ),
         }
-        for row in r.itertuples()
+        for row in scored.itertuples()
     ]
 
 

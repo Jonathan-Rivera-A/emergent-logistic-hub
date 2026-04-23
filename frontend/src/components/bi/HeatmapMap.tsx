@@ -60,8 +60,10 @@ export default function HeatmapMap({ points, height = 520 }: Props) {
     try {
       const bounds = L.latLngBounds(points.map(p => [p[0], p[1]]));
       if (bounds.isValid()) map.fitBounds(bounds, { padding: [30, 30], maxZoom: 10 });
-    } catch {
-      /* ignore */
+    } catch (err) {
+      // Non-critical: fitBounds failed for an edge case (e.g. empty/NaN coords).
+      // Map keeps its default center, which is acceptable UX.
+      console.warn('[HeatmapMap] fitBounds skipped:', err);
     }
   }, [points]);
 

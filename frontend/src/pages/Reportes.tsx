@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { Fuel, Navigation, Thermometer, Activity } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Toast from '../components/Toast';
+import { vehicleStatusLabel } from '../components/bi/chartStyles';
 
 interface Vehicle {
   id: string;
@@ -65,7 +66,6 @@ function Reportes() {
         .limit(50);
 
       if (vehiclesError || routesError) {
-        console.error('Error fetching data:', vehiclesError || routesError);
         showToast('Error al cargar los datos de reportes.', 'error');
       }
 
@@ -94,8 +94,7 @@ function Reportes() {
           totalDistance: totalDist,
         }));
       }
-    } catch (error) {
-      console.error('Error:', error);
+    } catch {
       showToast('Error inesperado al cargar los datos.', 'error');
     } finally {
       setLoading(false);
@@ -282,8 +281,7 @@ function Reportes() {
                     <td>{vehicle.plate}</td>
                     <td>
                       <span className={`status-badge ${vehicle.status}`}>
-                        {vehicle.status === 'active' ? 'Activo' :
-                         vehicle.status === 'inactive' ? 'Inactivo' : 'Mantenimiento'}
+                        {vehicleStatusLabel(vehicle.status)}
                       </span>
                     </td>
                     <td>{vehicle.current_temperature}°C</td>

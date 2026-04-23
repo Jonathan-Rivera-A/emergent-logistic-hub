@@ -68,7 +68,6 @@ export default function MonitorRutas() {
         .order('name');
 
       if (error) {
-        console.error('Error fetching vehicles:', error);
         showToast('Error al cargar las unidades. Por favor, verifica tu conexión.', 'error');
         return;
       }
@@ -80,7 +79,6 @@ export default function MonitorRutas() {
         }
       }
     } catch (error) {
-      console.error('Error:', error);
       showToast('Error inesperado al cargar las unidades.', 'error');
     } finally {
       setLoading(false);
@@ -96,7 +94,6 @@ export default function MonitorRutas() {
         .limit(20);
 
       if (error) {
-        console.error('Error fetching routes:', error);
         return;
       }
 
@@ -104,7 +101,6 @@ export default function MonitorRutas() {
         setRoutes(data);
       }
     } catch (error) {
-      console.error('Error:', error);
     }
   };
 
@@ -142,7 +138,6 @@ export default function MonitorRutas() {
       // Guardamos la ruta en la base de datos
       await saveRoute(distanceKm);
     } else {
-      console.error('Error al calcular la ruta:', status);
       setCalculateRoute(false);
       setCalculatingRoute(false);
       
@@ -176,7 +171,6 @@ export default function MonitorRutas() {
         .insert([routeData]);
 
       if (error) {
-        console.error('Error saving route:', error);
         showToast('Ruta calculada pero no se pudo guardar en el historial.', 'warning');
         return;
       }
@@ -191,7 +185,6 @@ export default function MonitorRutas() {
       // Recargar rutas
       fetchRoutes();
     } catch (error) {
-      console.error('Error:', error);
       showToast('Error al guardar la ruta.', 'error');
 
     }
@@ -209,7 +202,6 @@ export default function MonitorRutas() {
         .eq('id', routeId);
 
       if (error) {
-        console.error('Error deleting route:', error);
         showToast('Error al eliminar la ruta.', 'error');
         return;
       }
@@ -217,7 +209,6 @@ export default function MonitorRutas() {
       showToast('Ruta eliminada del historial.', 'success');
       fetchRoutes();
     } catch (error) {
-      console.error('Error:', error);
       showToast('Error al eliminar la ruta.', 'error');
     }
   };

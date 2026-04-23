@@ -190,6 +190,10 @@ def heatmap_points(
     pts = _apply_filters(get_points(), dispositivo, desde, hasta)
     if pts.empty:
         return []
+    # Exclude bad (0,0) sensor readings that distort map bounds
+    pts = pts[(pts["lat"].abs() > 0.1) & (pts["lng"].abs() > 0.1)]
+    if pts.empty:
+        return []
     sample = max(100, min(sample, 20000))
     if len(pts) > sample:
         pts = pts.sample(sample, random_state=42)

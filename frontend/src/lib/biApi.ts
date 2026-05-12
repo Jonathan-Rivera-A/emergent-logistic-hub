@@ -3,11 +3,14 @@
  * REACT_APP_BACKEND_URL / VITE_BACKEND_URL.
  *
  * Reads the current JWT from localStorage on every request (AuthContext writes it there).
+ * On 401 it clears the session and redirects to /login so the user re-authenticates
+ * instead of seeing a permanent error in the BI dashboard.
  */
 import axios from 'axios';
 
 const BASE = (import.meta.env.VITE_BACKEND_URL as string) || '';
 const TOKEN_KEY = 'auth:token';
+const USER_KEY = 'auth:user';
 
 export const biApi = axios.create({
   baseURL: `${BASE}/api/bi`,
@@ -19,6 +22,20 @@ biApi.interceptors.request.use(cfg => {
   if (t) cfg.headers.Authorization = `Bearer ${t}`;
   return cfg;
 });
+
+biApi.interceptors.response.use(
+  r => r,
+  err => {
+    if (err?.response?.status === 401) {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+      if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+        window.location.replace(`/login?reason=expired&from=${encodeURIComponent(window.location.pathname)}`);
+      }
+    }
+    return Promise.reject(err);
+  }
+);
 
 export interface KpiResponse {
   total_rutas: number;

@@ -33,6 +33,9 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
 
+  // If we landed here from a forced redirect (401 / expired session), tell the user.
+  const expired = new URLSearchParams(location.search).get('reason') === 'expired';
+
   if (user) {
     const from = (location.state as { from?: string } | null)?.from || '/';
     return <Navigate to={from} replace />;
@@ -43,9 +46,10 @@ export default function Login() {
     setLocalError(null);
     try {
       await login(email.trim(), password);
-      navigate((location.state as { from?: string } | null)?.from || '/', {
-        replace: true,
-      });
+      const from = new URLSearchParams(location.search).get('from')
+        || (location.state as { from?: string } | null)?.from
+        || '/';
+      navigate(from, { replace: true });
     } catch {
       // error already set by context
     }
@@ -80,6 +84,23 @@ export default function Login() {
         <p style={{ color: '#64748b', fontSize: 14, marginBottom: 24 }}>
           Ingresa para acceder al dashboard
         </p>
+
+        {expired && (
+          <div
+            style={{
+              padding: 10,
+              background: '#fef3c7',
+              color: '#92400e',
+              borderRadius: 8,
+              fontSize: 13,
+              marginBottom: 16,
+              border: '1px solid #fde68a',
+            }}
+            data-testid="login-expired-notice"
+          >
+            Tu sesión expiró o no es válida. Vuelve a iniciar sesión para continuar.
+          </div>
+        )}
 
         <form onSubmit={onSubmit} style={{ display: 'grid', gap: 14 }}>
           <div>

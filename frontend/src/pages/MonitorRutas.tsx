@@ -37,13 +37,24 @@ interface Route {
   created_at: string;
 }
 
+interface Route {
+  id: string;
+  vehicle_id: string;
+  origin: string;
+  destination: string;
+  fuel_consumed: string;
+  distance_km: string;
+  start_time: string;
+  created_at: string;
+}
+
 interface ToastState {
   show: boolean;
   message: string;
   type: 'success' | 'error' | 'warning' | 'info';
 }
 
-function MonitorRutas() {
+export default function MonitorRutas() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [routes, setRoutes] = useState<Route[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState<string | null>(null);
@@ -334,7 +345,7 @@ function MonitorRutas() {
                     type="text"
                     value={origin}
                     onChange={(e) => setOrigin(e.target.value)}
-                    placeholder="Ciudad de México"
+                    placeholder="Crucero San Luis de la Paz"
                     style={{
                       width: '100%',
                       padding: '10px',
@@ -632,4 +643,4 @@ function MonitorRutas() {
   );
 }
 
-export default MonitorRutas;
+

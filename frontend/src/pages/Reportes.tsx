@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { supabase } from '../lib/supabase';
 import { Fuel, Navigation, Thermometer, Activity } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -17,13 +17,17 @@ interface Vehicle {
 interface Route {
   id: string;
   vehicle_id: string;
+  origin: string;
+  destination: string;
   distance_km: number;
-  fuel_consumed: number;
+  fuel_liters: number;
+  motor_hours: number;
+  consumption_per_100km: number;
+  efficiency_km_per_liter: number;
+  consumption_per_hour: number;
   start_time: string;
-  end_time: string;
+  created_at: string;
 }
-
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 
 interface ToastState {
   show: boolean;
@@ -41,6 +45,9 @@ function Reportes() {
     totalDistance: 0,
     activeVehicles: 0,
     averageTemperature: 0,
+    averageConsumptionPer100km: 0,
+    averageEfficiencyKmPerLiter: 0,
+    totalMotorHours: 0,
   });
 
   useEffect(() => {
@@ -85,13 +92,28 @@ function Reportes() {
 
       if (routesData) {
         setRoutes(routesData);
-        const totalFuel = routesData.reduce((acc, r) => acc + (r.fuel_consumed || 0), 0);
+        const totalFuel = routesData.reduce((acc, r) => acc + (r.fuel_liters || 0), 0);
         const totalDist = routesData.reduce((acc, r) => acc + (r.distance_km || 0), 0);
+        const totalHours = routesData.reduce((acc, r) => acc + (r.motor_hours || 0), 0);
+        
+        // Calcular promedios
+        const routesWithConsumption = routesData.filter(r => r.consumption_per_100km);
+        const avgConsumption = routesWithConsumption.length > 0
+          ? routesWithConsumption.reduce((acc, r) => acc + r.consumption_per_100km, 0) / routesWithConsumption.length
+          : 0;
+          
+        const routesWithEfficiency = routesData.filter(r => r.efficiency_km_per_liter);
+        const avgEfficiency = routesWithEfficiency.length > 0
+          ? routesWithEfficiency.reduce((acc, r) => acc + r.efficiency_km_per_liter, 0) / routesWithEfficiency.length
+          : 0;
 
         setStats(prev => ({
           ...prev,
           totalFuelConsumed: totalFuel,
           totalDistance: totalDist,
+          totalMotorHours: totalHours,
+          averageConsumptionPer100km: avgConsumption,
+          averageEfficiencyKmPerLiter: avgEfficiency,
         }));
       }
     } catch (error) {
@@ -102,21 +124,29 @@ function Reportes() {
     }
   };
 
-  const vehicleStatusData = [
-    { name: 'Activos', value: vehicles.filter(v => v.status === 'active').length },
-    { name: 'Inactivos', value: vehicles.filter(v => v.status === 'inactive').length },
-    { name: 'Mantenimiento', value: vehicles.filter(v => v.status === 'maintenance').length },
-  ];
+  // Preparar datos para gráficas
+  const consumptionByVehicleData = vehicles.map(vehicle => {
+    const vehicleRoutes = routes.filter(r => r.vehicle_id === vehicle.id);
+    const avgConsumption = vehicleRoutes.length > 0
+      ? vehicleRoutes.reduce((acc, r) => acc + (r.consumption_per_100km || 0), 0) / vehicleRoutes.length
+      : 0;
+    const avgEfficiency = vehicleRoutes.length > 0
+      ? vehicleRoutes.reduce((acc, r) => acc + (r.efficiency_km_per_liter || 0), 0) / vehicleRoutes.length
+      : 0;
+    
+    return {
+      name: vehicle.name,
+      consumo: parseFloat(avgConsumption.toFixed(2)),
+      rendimiento: parseFloat(avgEfficiency.toFixed(2)),
+      rutas: vehicleRoutes.length,
+    };
+  }).filter(v => v.rutas > 0);
 
-  const fuelConsumptionData = routes.slice(0, 10).map((route, index) => ({
-    name: `Ruta ${index + 1}`,
-    combustible: route.fuel_consumed,
+  const recentRoutesData = routes.slice(0, 10).map((route, index) => ({
+    name: `Ruta ${routes.length - index}`,
+    'L/100km': route.consumption_per_100km || 0,
+    'km/L': route.efficiency_km_per_liter || 0,
     distancia: route.distance_km,
-  }));
-
-  const temperatureData = vehicles.map(vehicle => ({
-    name: vehicle.name,
-    temperatura: vehicle.current_temperature,
   }));
 
   return (
@@ -139,161 +169,255 @@ function Reportes() {
       ) : (
         <>
           <div className="stats-grid">
-        <div className="stat-card" style={{ borderLeftColor: '#3b82f6' }}>
-          <h3>
-            <Fuel size={16} style={{ display: 'inline', marginRight: '8px' }} />
-            Combustible Total
-          </h3>
-          <div className="stat-value">{stats.totalFuelConsumed.toFixed(1)} L</div>
-          <div className="stat-label">Últimas 50 rutas</div>
-        </div>
+            <div className="stat-card" style={{ borderLeftColor: '#3b82f6' }}>
+              <h3>
+                <Fuel size={16} style={{ display: 'inline', marginRight: '8px' }} />
+                Combustible Total
+              </h3>
+              <div className="stat-value">{stats.totalFuelConsumed.toFixed(1)} L</div>
+              <div className="stat-label">Últimas 50 rutas</div>
+            </div>
 
-        <div className="stat-card" style={{ borderLeftColor: '#10b981' }}>
-          <h3>
-            <Navigation size={16} style={{ display: 'inline', marginRight: '8px' }} />
-            Kilómetros
-          </h3>
-          <div className="stat-value">{stats.totalDistance.toFixed(0)} km</div>
-          <div className="stat-label">Distancia recorrida</div>
-        </div>
+            <div className="stat-card" style={{ borderLeftColor: '#10b981' }}>
+              <h3>
+                <Navigation size={16} style={{ display: 'inline', marginRight: '8px' }} />
+                Distancia Total
+              </h3>
+              <div className="stat-value">{stats.totalDistance.toFixed(0)} km</div>
+              <div className="stat-label">Kilómetros recorridos</div>
+            </div>
 
-        <div className="stat-card" style={{ borderLeftColor: '#f59e0b' }}>
-          <h3>
-            <Activity size={16} style={{ display: 'inline', marginRight: '8px' }} />
-            Unidades Activas
-          </h3>
-          <div className="stat-value">{stats.activeVehicles}</div>
-          <div className="stat-label">De {vehicles.length} unidades</div>
-        </div>
+            <div className="stat-card" style={{ borderLeftColor: '#f59e0b' }}>
+              <h3>
+                <Fuel size={16} style={{ display: 'inline', marginRight: '8px' }} />
+                Consumo Promedio
+              </h3>
+              <div className="stat-value">{stats.averageConsumptionPer100km.toFixed(2)} L/100km</div>
+              <div className="stat-label">Consumo por distancia</div>
+            </div>
 
-        <div className="stat-card" style={{ borderLeftColor: '#ef4444' }}>
-          <h3>
-            <Thermometer size={16} style={{ display: 'inline', marginRight: '8px' }} />
-            Temperatura Promedio
-          </h3>
-          <div className="stat-value">{stats.averageTemperature.toFixed(1)}°C</div>
-          <div className="stat-label">Temperatura de flota</div>
-        </div>
-      </div>
+            <div className="stat-card" style={{ borderLeftColor: '#10b981' }}>
+              <h3>
+                <Activity size={16} style={{ display: 'inline', marginRight: '8px' }} />
+                Rendimiento Promedio
+              </h3>
+              <div className="stat-value">{stats.averageEfficiencyKmPerLiter.toFixed(2)} km/L</div>
+              <div className="stat-label">Eficiencia de combustible</div>
+            </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))', gap: '24px' }}>
-        <div className="card">
-          <h2>Consumo de Combustible por Ruta</h2>
-          <div className="chart-container">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={fuelConsumptionData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-                  }}
-                />
-                <Legend />
-                <Bar dataKey="combustible" fill="#3b82f6" name="Combustible (L)" radius={[8, 8, 0, 0]} />
-                <Bar dataKey="distancia" fill="#10b981" name="Distancia (km)" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="stat-card" style={{ borderLeftColor: '#8b5cf6' }}>
+              <h3>
+                <Thermometer size={16} style={{ display: 'inline', marginRight: '8px' }} />
+                Horas de Motor
+              </h3>
+              <div className="stat-value">{stats.totalMotorHours.toFixed(1)} hrs</div>
+              <div className="stat-label">Total acumulado</div>
+            </div>
+
+            <div className="stat-card" style={{ borderLeftColor: '#ef4444' }}>
+              <h3>
+                <Activity size={16} style={{ display: 'inline', marginRight: '8px' }} />
+                Unidades Activas
+              </h3>
+              <div className="stat-value">{stats.activeVehicles}</div>
+              <div className="stat-label">En operación</div>
+            </div>
           </div>
-        </div>
 
-        <div className="card">
-          <h2>Estado de las Unidades</h2>
-          <div className="chart-container">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={vehicleStatusData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, value }) => `${name}: ${value}`}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {vehicleStatusData.map((_entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+          {/* Gráficas de Consumo y Rendimiento */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))', gap: '24px', marginTop: '24px' }}>
+            {/* Gráfica 1: Consumo Promedio por Vehículo */}
+            <div className="card">
+              <h2>📊 Consumo Promedio por Vehículo</h2>
+              <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '16px' }}>
+                Litros consumidos cada 100 kilómetros
+              </p>
+              <div className="chart-container">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={consumptionByVehicleData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} label={{ value: 'L/100km', angle: -90, position: 'insideLeft' }} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                    <Legend />
+                    <Bar dataKey="consumo" fill="#f59e0b" name="Consumo (L/100km)" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
 
-        <div className="card">
-          <h2>Temperatura de Unidades</h2>
-          <div className="chart-container">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={temperatureData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-                  }}
-                />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="temperatura"
-                  stroke="#ef4444"
-                  strokeWidth={2}
-                  name="Temperatura (°C)"
-                  dot={{ fill: '#ef4444', r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+            {/* Gráfica 2: Rendimiento por Vehículo */}
+            <div className="card">
+              <h2>⚡ Rendimiento por Vehículo</h2>
+              <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '16px' }}>
+                Kilómetros recorridos por litro
+              </p>
+              <div className="chart-container">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={consumptionByVehicleData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} label={{ value: 'km/L', angle: -90, position: 'insideLeft' }} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                    <Legend />
+                    <Bar dataKey="rendimiento" fill="#10b981" name="Rendimiento (km/L)" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
 
-        <div className="card">
-          <h2>Detalles de Unidades</h2>
-          <div style={{ maxHeight: '350px', overflow: 'auto' }}>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Unidad</th>
-                  <th>Placa</th>
-                  <th>Estado</th>
-                  <th>Temperatura</th>
-                </tr>
-              </thead>
-              <tbody>
-                {vehicles.map(vehicle => (
-                  <tr key={vehicle.id}>
-                    <td style={{ fontWeight: 500, color: '#1f2937' }}>{vehicle.name}</td>
-                    <td>{vehicle.plate}</td>
-                    <td>
-                      <span className={`status-badge ${vehicle.status}`}>
-                        {vehicle.status === 'active' ? 'Activo' :
-                         vehicle.status === 'inactive' ? 'Inactivo' : 'Mantenimiento'}
-                      </span>
-                    </td>
-                    <td>{vehicle.current_temperature}°C</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {/* Gráfica 3: Tendencia de Consumo en Últimas Rutas */}
+            <div className="card">
+              <h2>📈 Tendencia de Consumo - Últimas 10 Rutas</h2>
+              <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '16px' }}>
+                Comparación de consumo y rendimiento
+              </p>
+              <div className="chart-container">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={recentRoutesData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                    <Legend />
+                    <Line type="monotone" dataKey="L/100km" stroke="#f59e0b" strokeWidth={2} name="Consumo (L/100km)" />
+                    <Line type="monotone" dataKey="km/L" stroke="#10b981" strokeWidth={2} name="Rendimiento (km/L)" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Gráfica 4: Distancia vs Combustible */}
+            <div className="card">
+              <h2>🚛 Distancia vs Combustible</h2>
+              <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '16px' }}>
+                Relación en las últimas 10 rutas
+              </p>
+              <div className="chart-container">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={recentRoutesData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                    <Legend />
+                    <Bar dataKey="distancia" fill="#3b82f6" name="Distancia (km)" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+
+          {/* Tabla Detallada de Rutas */}
+          <div className="card" style={{ marginTop: '24px' }}>
+            <h2>📋 Detalle de Rutas con Consumo</h2>
+            <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '16px' }}>
+              Información completa de las últimas 20 rutas calculadas
+            </p>
+            {routes.length === 0 ? (
+              <div style={{ 
+                textAlign: 'center', 
+                padding: '40px', 
+                color: '#6b7280',
+                backgroundColor: '#f9fafb',
+                borderRadius: '8px'
+              }}>
+                <p style={{ margin: 0, fontSize: '14px' }}>
+                  No hay rutas registradas. Ve a Monitor de Rutas para calcular y guardar rutas.
+                </p>
+              </div>
+            ) : (
+              <div style={{ overflow: 'auto' }}>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Unidad</th>
+                      <th>Ruta</th>
+                      <th>Distancia<br/>(km)</th>
+                      <th>Combustible<br/>(L)</th>
+                      <th>Horas Motor</th>
+                      <th style={{ background: '#fef3c7' }}>Consumo<br/>(L/100km)</th>
+                      <th style={{ background: '#d1fae5' }}>Rendimiento<br/>(km/L)</th>
+                      <th style={{ background: '#e9d5ff' }}>Consumo/Hora<br/>(L/h)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {routes.slice(0, 20).map((route) => {
+                      const vehicle = vehicles.find(v => v.id === route.vehicle_id);
+                      return (
+                        <tr key={route.id}>
+                          <td style={{ fontSize: '13px' }}>
+                            {new Date(route.created_at).toLocaleDateString('es-MX', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </td>
+                          <td style={{ fontWeight: 500 }}>
+                            {vehicle ? `${vehicle.name} (${vehicle.plate})` : 'N/A'}
+                          </td>
+                          <td>
+                            <div style={{ fontSize: '13px' }}>
+                              <div>{route.origin}</div>
+                              <div style={{ color: '#6b7280' }}>→ {route.destination}</div>
+                            </div>
+                          </td>
+                          <td style={{ fontWeight: 600, color: '#3b82f6' }}>
+                            {route.distance_km.toFixed(2)}
+                          </td>
+                          <td style={{ fontWeight: 600 }}>
+                            {route.fuel_liters ? route.fuel_liters.toFixed(2) : 'N/A'}
+                          </td>
+                          <td>
+                            {route.motor_hours ? route.motor_hours.toFixed(1) : 'N/A'}
+                          </td>
+                          <td style={{ fontWeight: 700, color: '#f59e0b', background: '#fef3c7' }}>
+                            {route.consumption_per_100km ? route.consumption_per_100km.toFixed(2) : 'N/A'}
+                          </td>
+                          <td style={{ fontWeight: 700, color: '#10b981', background: '#d1fae5' }}>
+                            {route.efficiency_km_per_liter ? route.efficiency_km_per_liter.toFixed(2) : 'N/A'}
+                          </td>
+                          <td style={{ fontWeight: 700, color: '#8b5cf6', background: '#e9d5ff' }}>
+                            {route.consumption_per_hour ? route.consumption_per_hour.toFixed(2) : 'N/A'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>

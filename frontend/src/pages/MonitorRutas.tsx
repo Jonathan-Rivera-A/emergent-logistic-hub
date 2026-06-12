@@ -10,8 +10,8 @@ const mapContainerStyle = {
 };
 
 const center = {
-  lat: 19.4326,
-  lng: -99.1332,
+  lat: 21.2961,  // San Luis de la Paz, Guanajuato
+  lng: -100.5156,
 };
 
 interface Vehicle {
@@ -19,6 +19,22 @@ interface Vehicle {
   name: string;
   plate: string;
   status: string;
+  average_fuel_consumption: number; // L/100km
+}
+
+interface Route {
+  id: string;
+  vehicle_id: string;
+  origin: string;
+  destination: string;
+  distance_km: number;
+  fuel_liters: number;
+  motor_hours: number;
+  consumption_per_100km: number;
+  efficiency_km_per_liter: number;
+  consumption_per_hour: number;
+  start_time: string;
+  created_at: string;
 }
 
 interface Route {
@@ -45,6 +61,8 @@ export default function MonitorRutas() {
   const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
+  const [fuelLiters, setFuelLiters] = useState<number>(0);
+  const [motorHours, setMotorHours] = useState<number>(0);
   const [calculateRoute, setCalculateRoute] = useState(false);
   const [loading, setLoading] = useState(true);
   const [calculatingRoute, setCalculatingRoute] = useState(false);
@@ -108,7 +126,6 @@ export default function MonitorRutas() {
     }
   };
 
-
   const handleCalculateRoute = () => {
     if (!origin.trim()) {
       showToast('Por favor ingresa un punto de origen.', 'warning');
@@ -127,7 +144,7 @@ export default function MonitorRutas() {
     setCalculateRoute(true);
   };
 
-  const directionsCallback = async(result: google.maps.DirectionsResult | null, status: google.maps.DirectionsStatus) => {
+  const directionsCallback = async (result: google.maps.DirectionsResult | null, status: google.maps.DirectionsStatus) => {
     if (status === 'OK' && result) {
       setDirections(result);
       setCalculateRoute(false);
@@ -135,12 +152,27 @@ export default function MonitorRutas() {
       
       const route = result.routes[0];
       const distanceText = route.legs[0].distance?.text || 'N/A';
-    /*Extracion numerica de distancia pior kilometro*/
-      const distanceKm = route.legs[0].distance?.value ? route.legs[0].distance!.value / 1000 : 0;
+      const distanceKm = route.legs[0].distance?.value ? route.legs[0].distance.value / 1000 : 0;
       const duration = route.legs[0].duration?.text || 'N/A';
-      showToast(`Ruta calculada: ${distanceText}, ${duration}`, 'success');
-      // Guardamos la ruta en la base de datos
-      await saveRoute(distanceKm);
+      
+      // Calcular automáticamente basándose en el vehículo seleccionado
+      const vehicle = vehicles.find(v => v.id === selectedVehicle);
+      if (vehicle && vehicle.average_fuel_consumption > 0) {
+        // Calcular litros consumidos: (distancia * consumo_promedio) / 100
+        const calculatedFuelLiters = (distanceKm * vehicle.average_fuel_consumption) / 100;
+        setFuelLiters(parseFloat(calculatedFuelLiters.toFixed(2)));
+        
+        // Calcular horas de motor: distancia / 80 km/h (velocidad promedio)
+        const calculatedMotorHours = distanceKm / 80;
+        setMotorHours(parseFloat(calculatedMotorHours.toFixed(2)));
+        
+        showToast(
+          `Ruta calculada: ${distanceText}, ${duration}. Consumo estimado: ${calculatedFuelLiters.toFixed(2)}L`,
+          'success'
+        );
+      } else {
+        showToast(`Ruta calculada: ${distanceText}, ${duration}`, 'success');
+      }
     } else {
       console.error('Error al calcular la ruta:', status);
       setCalculateRoute(false);
@@ -161,13 +193,38 @@ export default function MonitorRutas() {
 
   const saveRoute = async (distanceKm: number) => {
     try {
+      // Validar que se hayan ingresado litros consumidos
+      if (!fuelLiters || fuelLiters <= 0) {
+        showToast('Por favor ingresa los litros de combustible consumidos.', 'warning');
+        return;
+      }
+
+      // Validar que se hayan ingresado horas de motor
+      if (!motorHours || motorHours <= 0) {
+        showToast('Por favor ingresa las horas de motor.', 'warning');
+        return;
+      }
+
+      // Calcular indicadores de consumo
+      // 🔹 Consumo por distancia (L/100km)
+      const consumptionPer100km = (fuelLiters / distanceKm) * 100;
+      
+      // 🔹 Rendimiento (km/L)
+      const efficiencyKmPerLiter = distanceKm / fuelLiters;
+      
+      // 🔹 Consumo por hora (L/h)
+      const consumptionPerHour = fuelLiters / motorHours;
       
       const routeData = {
         vehicle_id: selectedVehicle,
         origin: origin,
         destination: destination,
         distance_km: distanceKm,
-        fuel_consumed: 0, // Puedes calcular esto basándote en distancia y consumo promedio
+        fuel_liters: fuelLiters,
+        motor_hours: motorHours,
+        consumption_per_100km: parseFloat(consumptionPer100km.toFixed(2)),
+        efficiency_km_per_liter: parseFloat(efficiencyKmPerLiter.toFixed(2)),
+        consumption_per_hour: parseFloat(consumptionPerHour.toFixed(2)),
         start_time: new Date().toISOString(),
       };
 
@@ -181,11 +238,16 @@ export default function MonitorRutas() {
         return;
       }
 
-      showToast('Ruta guardada en el historial exitosamente.', 'success');
+      showToast(
+        `Ruta guardada. Consumo: ${consumptionPer100km.toFixed(2)} L/100km | Rendimiento: ${efficiencyKmPerLiter.toFixed(2)} km/L`,
+        'success'
+      );
       
       // Limpiar formulario
       setOrigin('');
       setDestination('');
+      setFuelLiters(0);
+      setMotorHours(0);
       setDirections(null);
       
       // Recargar rutas
@@ -193,7 +255,6 @@ export default function MonitorRutas() {
     } catch (error) {
       console.error('Error:', error);
       showToast('Error al guardar la ruta.', 'error');
-
     }
   };
 
@@ -246,11 +307,11 @@ export default function MonitorRutas() {
         <LoadingSpinner />
       ) : (
         <>
-        <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '24px', marginBottom: '24px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div className="card" style={{ marginBottom: 0, padding: 0, overflow: 'hidden', height: '500px'  }}>
-              <h2>Planificar Ruta</h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '24px', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="card" style={{ marginBottom: 0 }}>
+                <h2>Planificar Ruta</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
                     Unidad
@@ -316,6 +377,56 @@ export default function MonitorRutas() {
                   />
                 </div>
 
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
+                    Litros Consumidos ⛽
+                  </label>
+                  <input
+                    type="number"
+                    value={fuelLiters || ''}
+                    onChange={(e) => setFuelLiters(parseFloat(e.target.value) || 0)}
+                    placeholder="50.5"
+                    min="0"
+                    step="0.1"
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      borderRadius: '6px',
+                      border: '1px solid #d1d5db',
+                      fontSize: '14px'
+                    }}
+                    data-testid="fuel-input"
+                  />
+                  <span style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', display: 'block' }}>
+                    Estimado de combustible para la ruta
+                  </span>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
+                    Horas de Motor 🕐
+                  </label>
+                  <input
+                    type="number"
+                    value={motorHours || ''}
+                    onChange={(e) => setMotorHours(parseFloat(e.target.value) || 0)}
+                    placeholder="6.5"
+                    min="0"
+                    step="0.1"
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      borderRadius: '6px',
+                      border: '1px solid #d1d5db',
+                      fontSize: '14px'
+                    }}
+                    data-testid="hours-input"
+                  />
+                  <span style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', display: 'block' }}>
+                    Tiempo estimado con motor encendido
+                  </span>
+                </div>
+
                 <button
                   onClick={handleCalculateRoute}
                   disabled={!origin || !destination || !selectedVehicle || calculatingRoute}
@@ -335,6 +446,33 @@ export default function MonitorRutas() {
                 >
                   {calculatingRoute ? 'Calculando...' : 'Calcular Ruta'}
                 </button>
+
+                {directions && (
+                  <button
+                    onClick={() => {
+                      const route = directions.routes[0];
+                      const distanceKm = route.legs[0].distance?.value ? route.legs[0].distance.value / 1000 : 0;
+                      saveRoute(distanceKm);
+                    }}
+                    disabled={!fuelLiters || !motorHours}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      backgroundColor: '#10b981',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      cursor: (!fuelLiters || !motorHours) ? 'not-allowed' : 'pointer',
+                      opacity: (!fuelLiters || !motorHours) ? 0.5 : 1,
+                      marginTop: '8px'
+                    }}
+                    data-testid="save-route-button"
+                  >
+                    💾 Guardar Ruta en Historial
+                  </button>
+                )}
               </div>
             </div>
 
@@ -368,12 +506,12 @@ export default function MonitorRutas() {
             </div>
           </div>
 
-          <div className="card" style={{ marginBottom: 0, padding: 0, overflow: 'hidden', height: '500px'  }}>
+          <div className="card" style={{ marginBottom: 0, padding: 0, overflow: 'hidden', height: '500px' }}>
             <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY_HERE'}>
               <GoogleMap
                 mapContainerStyle={mapContainerStyle}
                 center={center}
-                zoom={12}
+                zoom={14}
               >
                 {calculateRoute && origin && destination && (
                   <DirectionsService
@@ -403,7 +541,7 @@ export default function MonitorRutas() {
         </div>
 
         {/* Tabla de Historial de Rutas */}
-        <div className="card" style={{ padding: '24px' }}>
+        <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h2 style={{ margin: 0 }}>Historial de Rutas Calculadas</h2>
             <span style={{ fontSize: '14px', color: '#6b7280' }}>
@@ -425,60 +563,75 @@ export default function MonitorRutas() {
             </div>
           ) : (
             <div style={{ overflow: 'auto' }}>
-              <table className="data-table\">
+              <table className="data-table">
                 <thead>
                   <tr>
                     <th>Fecha</th>
                     <th>Unidad</th>
-                    <th>Origen</th>
-                    <th>Destino</th>
-                    <th>Distancia (km)</th>
+                    <th>Origen → Destino</th>
+                    <th>Distancia</th>
+                    <th>Consumo<br/>(L/100km)</th>
+                    <th>Rendimiento<br/>(km/L)</th>
+                    <th>Consumo/Hora<br/>(L/h)</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
-                    {routes.map((route) => (
-                      <tr key={route.id} data-testid={`route-row-${route.id}`}>
-                        <td style={{ fontSize: '13px' }}>
-                          {new Date(route.created_at).toLocaleDateString('es-MX', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </td>
-                        <td style={{ fontWeight: 500, color: '#1f2937' }}>
-                          {getVehicleName(route.vehicle_id)}
-                        </td>
-                        <td>{route.origin}</td>
-                        <td>{route.destination}</td>
-                        <td style={{ fontWeight: 600, color: '#3b82f6' }}>
-                          {Number(route.distance_km).toFixed(2)} km
-                        </td>
-                        <td>
-                          <button
-                            onClick={() => deleteRoute(route.id)}
-                            style={{
-                              padding: '6px 12px',
-                              backgroundColor: '#fee2e2',
-                              border: '1px solid #fecaca',
-                              borderRadius: '6px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              color: '#991b1b',
-                              fontSize: '13px',
-                              fontWeight: 500
-                            }}
-                            data-testid={`delete-route-${route.id}`}
-                          >
-                            🗑️ Eliminar
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                  {routes.map((route) => (
+                    <tr key={route.id} data-testid={`route-row-${route.id}`}>
+                      <td style={{ fontSize: '13px' }}>
+                        {new Date(route.created_at).toLocaleDateString('es-MX', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </td>
+                      <td style={{ fontWeight: 500, color: '#1f2937' }}>
+                        {getVehicleName(route.vehicle_id)}
+                      </td>
+                      <td>
+                        <div style={{ fontSize: '13px' }}>
+                          <div style={{ fontWeight: 500 }}>{route.origin}</div>
+                          <div style={{ color: '#6b7280' }}>→ {route.destination}</div>
+                        </div>
+                      </td>
+                      <td style={{ fontWeight: 600, color: '#3b82f6' }}>
+                        {route.distance_km.toFixed(2)} km
+                      </td>
+                      <td style={{ fontWeight: 600, color: '#f59e0b' }}>
+                        {route.consumption_per_100km ? route.consumption_per_100km.toFixed(2) : 'N/A'}
+                      </td>
+                      <td style={{ fontWeight: 600, color: '#10b981' }}>
+                        {route.efficiency_km_per_liter ? route.efficiency_km_per_liter.toFixed(2) : 'N/A'}
+                      </td>
+                      <td style={{ fontWeight: 600, color: '#8b5cf6' }}>
+                        {route.consumption_per_hour ? route.consumption_per_hour.toFixed(2) : 'N/A'}
+                      </td>
+                      <td>
+                        <button
+                          onClick={() => deleteRoute(route.id)}
+                          style={{
+                            padding: '6px 12px',
+                            backgroundColor: '#fee2e2',
+                            border: '1px solid #fecaca',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            color: '#991b1b',
+                            fontSize: '13px',
+                            fontWeight: 500
+                          }}
+                          data-testid={`delete-route-${route.id}`}
+                        >
+                          🗑️ Eliminar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
